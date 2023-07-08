@@ -1,53 +1,86 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { Point } from "./Point";
+    import { speed } from "./state";
 
-    let canvas: HTMLCanvasElement | undefined;
+    import { add, scale, sub, type Vec } from "./vector";
+
+    let canvas: HTMLCanvasElement;
+    let points: Point[] = [];
+
+    const sqrt2 = 1 / Math.sqrt(2);
+    let newPoint: Point | null = null;
 
     onMount(() => {
+        // if (!canvas) return;
         const ratio = window.devicePixelRatio || 1;
         const w = (canvas.width = window.innerWidth);
         const h = (canvas.height = window.innerHeight);
 
         console.log({ w, h, ratio });
 
-        const pos = { x: w / 2 - 100, y: h / 2 };
-        const radius = 20;
-        const delta = { x: 1, y: 1 };
-        const speed = 5;
+        const point = new Point(w / 2 - 100, h / 2, sqrt2, sqrt2);
+        points.push(point);
 
         const context = canvas.getContext("2d");
+        if (!context) throw new Error("No canvas context");
 
         let frame = requestAnimationFrame(function loop(t) {
             frame = requestAnimationFrame(loop);
 
             context.clearRect(0, 0, w, h);
 
-            context.fillStyle = "#000000";
-            context.beginPath();
-            context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
-            context.fill();
+            points.forEach((point) => {
+                point.draw(context);
+                point.moveInBox(w, h, $speed);
+            });
+            Point.calculateCollisions(points);
 
-            pos.x += delta.x * speed;
-            pos.y += delta.y * speed;
-
-            if (pos.x + radius > w) delta.x = -1;
-            if (pos.x - radius < 0) delta.x = 1;
-
-            if (pos.y + radius > h) delta.y = -1;
-            if (pos.y - radius < 0) delta.y = 1;
+            if (newPoint) newPoint.draw(context);
         });
 
         return () => {
             cancelAnimationFrame(frame);
         };
     });
+
+    function mousedown(event: MouseEvent) {
+        const rect = canvas.getBoundingClientRect();
+        newPoint = new Point(event.pageX - rect.left, event.pageY - rect.top);
+        newPoint.color = "#FFFFFF";
+    }
+
+    function mouseup(event: MouseEvent) {
+        if (!newPoint) return;
+        const rect = canvas.getBoundingClientRect();
+        const mousePos: Vec = [event.pageX - rect.left, event.pageY - rect.top];
+
+        let [dx, dy] = sub(newPoint.pos, mousePos);
+        const len = Math.sqrt(dx * dx + dy * dy);
+
+        let mdx = len ? (Math.log(1 + len) * dx) / len : 0;
+        let mdy = len ? (Math.log(1 + len) * dy) / len : 0;
+        newPoint.vel[0] = mdx;
+        newPoint.vel[1] = mdy;
+        newPoint.color = "#000000";
+        points.push(newPoint);
+
+        newPoint = null;
+    }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key == "Backspace") points = [];
+    }
 </script>
 
-<canvas bind:this={canvas} />
+<svelte:document on:keydown={keydown} />
+
+<canvas bind:this={canvas} on:mousedown={mousedown} on:mouseup={mouseup} />
 
 <style>
     canvas {
         touch-action: none;
+        position: fixed;
         display: block;
         margin: 0px;
 
