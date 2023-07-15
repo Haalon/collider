@@ -1,4 +1,4 @@
-import { add, dot, magnitude, magnitude2, normalize, scale, sub, type Vec } from "./vector";
+import { add, dot, magnitude, magnitude2, normalize, project, scale, sub, type Vec } from "./vector";
 
 export class Point {
     pos: Vec;
@@ -10,26 +10,24 @@ export class Point {
 
     color: string;
 
-    constructor(x: number, y: number, dx: number = 0, dy: number = 0) {
+    constructor(x: number, y: number, dx: number = 0, dy: number = 0, radius: number = 8, mass: number = 10) {
         this.pos = [x, y];
-        this.radius = 8;
+        this.radius = radius;
 
         this.vel = [dx, dy];
 
         this.color = "#000000";
-        this.mass = 1;
+        this.mass = mass;
     }
 
     moveInBox(w: number, h: number, speed: number = 1) {
-        // this.x += this.dx * speed;
-        // this.y += this.dy * speed;
         this.pos = add(this.pos, scale(speed, this.vel));
 
-        if (this.pos[0] + this.radius > w) this.vel[0] *= -1;
-        if (this.pos[0] - this.radius < 0) this.vel[0] *= -1;
+        if (this.pos[0] + this.radius > w && this.vel[0] > 0) this.vel[0] *= -1;
+        if (this.pos[0] - this.radius < 0 && this.vel[0] < 0) this.vel[0] *= -1;
 
-        if (this.pos[1] + this.radius > h) this.vel[1] *= -1;
-        if (this.pos[1] - this.radius < 0) this.vel[1] *= -1;
+        if (this.pos[1] + this.radius > h && this.vel[1] > 0) this.vel[1] *= -1;
+        if (this.pos[1] - this.radius < 0 && this.vel[1] < 0) this.vel[1] *= -1;
     }
 
     draw(context: CanvasRenderingContext2D) {
@@ -64,9 +62,15 @@ export class Point {
             for (let j = i + 1; j < points.length; j++) {
                 const otherPoint = points[j];
 
-                const distance = magnitude(sub(thisPoint.pos, otherPoint.pos));
+                const collisionAxis = sub(otherPoint.pos, thisPoint.pos);
+                const otherAxisVel = project(otherPoint.vel, collisionAxis);
+                const thisAxisVel = project(thisPoint.vel, collisionAxis);
 
-                if (distance < thisPoint.radius + otherPoint.radius) thisPoint.collide(otherPoint);
+                const distance = magnitude(collisionAxis);
+
+                if (distance > thisPoint.radius + otherPoint.radius) continue;
+                if (otherAxisVel > thisAxisVel) continue;
+                thisPoint.collide(otherPoint);
             }
         }
     }

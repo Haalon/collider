@@ -28,7 +28,7 @@ export function normalize(a: Vec): Vec {
     return scale(1 / magnitude(a), a);
 }
 
-export function project(a: Vec, b: Vec): Vec {
+export function project(a: Vec, b: Vec): number {
     const normB = normalize(b);
-    return scale(dot(normB, a), normB);
+    return dot(normB, a);
 }
