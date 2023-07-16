@@ -1,6 +1,6 @@
 <script lang="ts">
-    import Canvas from "./Canvas.svelte";
-    import Contols from "./Contols.svelte";
+  import Canvas from "./Canvas.svelte";
+  import Contols from "./Contols.svelte";
 </script>
 
 <Canvas />
