@@ -41,9 +41,10 @@ const types = [
 
 export function populate(w: number, h: number): Point[] {
   const points: Point[] = [];
+  const area = window.innerWidth * window.innerHeight; // 415_454
   for (const { radius, color, mass, count } of types) {
-    for (let index = 0; index < count; index++) {
-      const point = new Point(rand(0, w), rand(0, h), gaussianRandom(0, 2), gaussianRandom(0, 2), radius, mass);
+    for (let index = 0; index < (count * area) / 300_000; index++) {
+      const point = new Point(rand(0, w), rand(0, h), gaussianRandom(0, 1), gaussianRandom(0, 1), radius, mass);
       point.color = color;
       points.push(point);
     }

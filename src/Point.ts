@@ -56,7 +56,7 @@ export class Point {
     other.vel = add(other.vel, other_term);
   }
 
-  static calculateCollisions(points: Point[]) {
+  static calculateCollisions(points: Point[], preventInterlock = true) {
     for (let i = 0; i < points.length; i++) {
       const thisPoint = points[i];
       for (let j = i + 1; j < points.length; j++) {
@@ -69,7 +69,7 @@ export class Point {
         const distance = magnitude(collisionAxis);
 
         if (distance > thisPoint.radius + otherPoint.radius) continue;
-        if (otherAxisVel > thisAxisVel) continue;
+        if (preventInterlock && otherAxisVel > thisAxisVel) continue;
         thisPoint.collide(otherPoint);
       }
     }

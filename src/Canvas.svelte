@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Point } from "./Point";
-  import { color, mass, radius, speed } from "./state";
+  import { color, mass, preventInterlock, radius, speed } from "./state";
 
   import { populate } from "./populate";
   import { add, scale, sub, type Vec } from "./vector";
@@ -34,7 +34,7 @@
         point.draw(context);
         point.moveInBox(w, h, $speed);
       });
-      Point.calculateCollisions(points);
+      Point.calculateCollisions(points, $preventInterlock);
 
       if (newPoint) newPoint.draw(context);
     });
@@ -58,8 +58,8 @@
     let [dx, dy] = sub(newPoint.pos, mousePos);
     // const len = Math.sqrt(dx * dx + dy * dy);
 
-    let mdx = dx / 100;
-    let mdy = dy / 100;
+    let mdx = (Math.sign(dx) * (dx * dx)) / 10000;
+    let mdy = (Math.sign(dy) * (dy * dy)) / 10000;
     newPoint.vel[0] = mdx;
     newPoint.vel[1] = mdy;
     newPoint.color = $color;
@@ -70,6 +70,7 @@
 
   function keydown(e: KeyboardEvent) {
     if (e.key == "Backspace") points = [];
+    if (e.key == " ") $speed = $speed === 0 ? 1 : 0;
   }
 </script>
 

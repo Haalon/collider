@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { Checkbox, Kbd, TabItem, Tabs } from "flowbite-svelte";
+  import { color, mass, preventInterlock, radius, speed } from "./state";
   let visibility = "visible";
-  import { color, mass, radius, speed } from "./state";
 
   function keydown(e: KeyboardEvent) {
     if (e.key == "Escape") visibility = visibility === "visible" ? "hidden" : "visible";
@@ -9,29 +10,46 @@
 
 <svelte:document on:keydown={keydown} />
 
-<div class="w-full h-full relative flex justify-end items-center pointer-events-none" style:visibility>
-  <div
-    class="pointer-events-auto p-5 pt-10 flex flex-col gap-5 bg-slate-500/50 h-full w-fit min-w-[600px] text-slate-100"
-  >
-    <div class="input-row">
-      <label for="speed">Simulation speed: {$speed}</label>
-      <input name="speed" type="range" bind:value={$speed} min="0" max="5" step="0.1" />
-    </div>
+<div class="w-full h-full relative flex justify-center pointer-events-none" style:visibility>
+  <div class="mt-16 pointer-events-auto p-5 pt-10 bg-slate-900/95 h-max w-fit min-w-[50%] text-white rounded">
+    <Tabs style="pill">
+      <TabItem open title="Controls">
+        <div class="grid grid-cols-2 gap-y-2">
+          <div><Kbd class="px-2 py-1.5">Esc</Kbd></div>
+          <div>Show\Hide this dialog</div>
 
-    <div class="input-row">
-      <label for="speed">Point radius: {$radius}</label>
-      <input name="radius" type="range" bind:value={$radius} min="5" max="80" step="1" />
-    </div>
+          <div><Kbd class="px-2 py-1.5">Lmb</Kbd> + Mouse Drag</div>
+          <div>Spawn and launch a dot</div>
 
-    <div class="input-row">
-      <label for="speed">Point mass: {$mass}</label>
-      <input name="mass" type="range" bind:value={$mass} min="1" max="100" step="1" />
-    </div>
+          <div><Kbd class="px-2 py-1.5">BackSpace</Kbd></div>
+          <div>Delete all dots</div>
 
-    <div class="input-row">
-      <label for="speed">Point color: <span style:color={$color}>{$color}</span></label>
-      <input name="speed" type="color" bind:value={$color} />
-    </div>
+          <div><Kbd class="px-2 py-1.5">Space</Kbd></div>
+          <div>Pause/Unpause simulation</div>
+        </div>
+      </TabItem>
+      <TabItem title="Spawn">
+        <div class="grid grid-cols-2 gap-y-2">
+          <label for="radius">Point radius: {$radius}</label>
+          <input name="radius" type="range" class="accent-primary-500" bind:value={$radius} min="5" max="80" step="1" />
+
+          <label for="mass">Point mass: {$mass}</label>
+          <input name="mass" type="range" class="accent-primary-500" bind:value={$mass} min="1" max="100" step="1" />
+
+          <label for="color">Point color: <span style:color={$color}>{$color}</span></label>
+          <input name="color" class="accent-primary-500" type="color" bind:value={$color} />
+        </div>
+      </TabItem>
+      <TabItem title="General">
+        <div class="grid grid-cols-2 gap-y-2">
+          <label for="speed">Simulation speed: {$speed}</label>
+          <input name="speed" type="range" class="accent-primary-500" bind:value={$speed} min="0" max="5" step="0.1" />
+
+          <label for="interlock">Prevent interlock</label>
+          <Checkbox name="interlock" bind:checked={$preventInterlock} />
+        </div>
+      </TabItem>
+    </Tabs>
   </div>
 </div>
 
@@ -46,5 +64,17 @@
 
   input {
     flex-grow: 1;
+  }
+
+  input[type="checkbox"] {
+    accent-color: red;
+  }
+
+  input[type="color"] {
+    appearance: none;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    width: 100%;
   }
 </style>
