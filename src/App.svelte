@@ -3,5 +3,7 @@
   import Contols from "./Contols.svelte";
 </script>
 
-<Canvas />
-<Contols />
+<div class="h-screen">
+  <Canvas />
+  <Contols />
+</div>

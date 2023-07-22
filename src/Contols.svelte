@@ -9,8 +9,10 @@
 
 <svelte:document on:keydown={keydown} />
 
-<div class="container" style:visibility>
-  <div class="dialog">
+<div class="w-full h-full relative flex justify-end items-center pointer-events-none" style:visibility>
+  <div
+    class="pointer-events-auto p-5 pt-10 flex flex-col gap-5 bg-slate-500/50 h-full w-fit min-w-[600px] text-slate-100"
+  >
     <div class="input-row">
       <label for="speed">Simulation speed: {$speed}</label>
       <input name="speed" type="range" bind:value={$speed} min="0" max="5" step="0.1" />
@@ -35,10 +37,7 @@
 
 <style>
   .input-row {
-    display: flex;
-    width: 100%;
-    gap: 50px;
-    /* justify-content: space-between; */
+    @apply flex w-full gap-12;
   }
 
   label {
@@ -47,29 +46,5 @@
 
   input {
     flex-grow: 1;
-  }
-
-  .container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    position: relative;
-
-    justify-content: end;
-    align-items: center;
-    pointer-events: none;
-  }
-
-  .dialog {
-    pointer-events: all;
-    padding: 20px;
-    padding-top: 60px;
-    min-width: 600px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    background-color: rgba(203, 207, 216, 0.5);
   }
 </style>

@@ -75,17 +75,9 @@
 
 <svelte:document on:keydown={keydown} />
 
-<canvas bind:this={canvas} on:mousedown={mousedown} on:mouseup={mouseup} style="" />
-
-<style>
-  canvas {
-    touch-action: none;
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    display: block;
-    margin: 0px;
-
-    background-color: black;
-  }
-</style>
+<canvas
+  bind:this={canvas}
+  on:mousedown={mousedown}
+  on:mouseup={mouseup}
+  class="touch-none fixed top-0 left-0 bg-black"
+/>
