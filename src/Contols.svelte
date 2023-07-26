@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Checkbox, Kbd, TabItem, Tabs } from "flowbite-svelte";
+  import { MAX_MASS, MAX_RADIUS } from "./constants";
   import { color, mass, preventInterlock, radius, speed } from "./state";
   let visibility = "visible";
 
@@ -22,6 +23,9 @@
           <div>Spawn and launch a dot</div>
 
           <div><Kbd class="px-2 py-1.5">BackSpace</Kbd></div>
+          <div>Repopulate canvas</div>
+
+          <div><Kbd class="px-2 py-1.5">Delete</Kbd></div>
           <div>Delete all dots</div>
 
           <div><Kbd class="px-2 py-1.5">Space</Kbd></div>
@@ -31,10 +35,26 @@
       <TabItem title="Spawn">
         <div class="grid grid-cols-2 gap-y-2">
           <label for="radius">Point radius: {$radius}</label>
-          <input name="radius" type="range" class="accent-primary-500" bind:value={$radius} min="5" max="80" step="1" />
+          <input
+            name="radius"
+            type="range"
+            class="accent-primary-500"
+            bind:value={$radius}
+            min="5"
+            max={MAX_RADIUS}
+            step="1"
+          />
 
           <label for="mass">Point mass: {$mass}</label>
-          <input name="mass" type="range" class="accent-primary-500" bind:value={$mass} min="1" max="100" step="1" />
+          <input
+            name="mass"
+            type="range"
+            class="accent-primary-500"
+            bind:value={$mass}
+            min="1"
+            max={MAX_MASS}
+            step="1"
+          />
 
           <label for="color">Point color: <span style:color={$color}>{$color}</span></label>
           <input name="color" class="accent-primary-500" type="color" bind:value={$color} />

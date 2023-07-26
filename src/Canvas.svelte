@@ -1,40 +1,39 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Point } from "./Point";
+
   import { color, mass, preventInterlock, radius, speed } from "./state";
 
-  import { populate } from "./populate";
-  import { add, scale, sub, type Vec } from "./vector";
+  import { MAX_RADIUS } from "./constants";
+  import { Field } from "./Field";
+  import { sub, type Vec } from "./vector";
 
   let canvas: HTMLCanvasElement;
-  let points: Point[] = [];
 
-  const sqrt2 = 1 / Math.sqrt(2);
   let newPoint: Point | null = null;
 
+  let field: Field;
+
   onMount(() => {
-    // if (!canvas) return;
-    const ratio = window.devicePixelRatio || 1;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("No canvas context");
+
     const w = (canvas.width = window.innerWidth);
     const h = (canvas.height = window.innerHeight);
 
-    console.log({ w, h, ratio });
-
-    points = populate(w, h);
-
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("No canvas context");
+    field = new Field([w, h], MAX_RADIUS);
+    field.populate();
 
     let frame = requestAnimationFrame(function loop(t) {
       frame = requestAnimationFrame(loop);
 
       context.clearRect(0, 0, w, h);
 
-      points.forEach((point) => {
+      for (const point of field.points) {
         point.draw(context);
-        point.moveInBox(w, h, $speed);
-      });
-      Point.calculateCollisions(points, $preventInterlock);
+      }
+      field.movePoints($speed);
+      field.calculateCollisions($preventInterlock);
 
       if (newPoint) newPoint.draw(context);
     });
@@ -56,20 +55,23 @@
     const mousePos: Vec = [event.pageX - rect.left, event.pageY - rect.top];
 
     let [dx, dy] = sub(newPoint.pos, mousePos);
-    // const len = Math.sqrt(dx * dx + dy * dy);
 
     let mdx = (Math.sign(dx) * (dx * dx)) / 10000;
     let mdy = (Math.sign(dy) * (dy * dy)) / 10000;
     newPoint.vel[0] = mdx;
     newPoint.vel[1] = mdy;
     newPoint.color = $color;
-    points.push(newPoint);
+    field.addPoint(newPoint);
 
     newPoint = null;
   }
 
   function keydown(e: KeyboardEvent) {
-    if (e.key == "Backspace") points = [];
+    if (e.key == "Backspace") {
+      field.clear();
+      field.populate();
+    }
+    if (e.key == "Delete") field.clear();
     if (e.key == " ") $speed = $speed === 0 ? 1 : 0;
   }
 </script>

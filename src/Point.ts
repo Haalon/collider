@@ -36,42 +36,4 @@ export class Point {
     context.arc(this.pos[0], this.pos[1], this.radius, 0, 2 * Math.PI);
     context.fill();
   }
-
-  collide(other: Point) {
-    // see https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
-    const x1_x2 = sub(this.pos, other.pos);
-    const v1_v2 = sub(this.vel, other.vel);
-
-    const magn2 = magnitude2(x1_x2);
-
-    const this_mass_mult = (2 * other.mass) / (this.mass + other.mass);
-    const other_mass_mult = (2 * this.mass) / (this.mass + other.mass);
-
-    const dot_mult = dot(v1_v2, x1_x2) / magn2;
-
-    const this_term = scale(this_mass_mult * dot_mult, x1_x2);
-    const other_term = scale(other_mass_mult * dot_mult, x1_x2);
-
-    this.vel = sub(this.vel, this_term);
-    other.vel = add(other.vel, other_term);
-  }
-
-  static calculateCollisions(points: Point[], preventInterlock = true) {
-    for (let i = 0; i < points.length; i++) {
-      const thisPoint = points[i];
-      for (let j = i + 1; j < points.length; j++) {
-        const otherPoint = points[j];
-
-        const collisionAxis = sub(otherPoint.pos, thisPoint.pos);
-        const otherAxisVel = project(otherPoint.vel, collisionAxis);
-        const thisAxisVel = project(thisPoint.vel, collisionAxis);
-
-        const distance = magnitude(collisionAxis);
-
-        if (distance > thisPoint.radius + otherPoint.radius) continue;
-        if (preventInterlock && otherAxisVel > thisAxisVel) continue;
-        thisPoint.collide(otherPoint);
-      }
-    }
-  }
 }
