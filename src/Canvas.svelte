@@ -43,13 +43,13 @@
     };
   });
 
-  function mousedown(event: MouseEvent) {
+  function pointerdown(event: MouseEvent) {
     const rect = canvas.getBoundingClientRect();
     newPoint = new Point(event.pageX - rect.left, event.pageY - rect.top, 0, 0, $radius, $mass);
     newPoint.color = "#FFFFFF";
   }
 
-  function mouseup(event: MouseEvent) {
+  function pointerup(event: MouseEvent) {
     if (!newPoint) return;
     const rect = canvas.getBoundingClientRect();
     const mousePos: Vec = [event.pageX - rect.left, event.pageY - rect.top];
@@ -80,7 +80,7 @@
 
 <canvas
   bind:this={canvas}
-  on:mousedown={mousedown}
-  on:mouseup={mouseup}
+  on:pointerdown={pointerdown}
+  on:pointerup={pointerup}
   class="touch-none fixed top-0 left-0 bg-black"
 />

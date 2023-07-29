@@ -2,7 +2,15 @@
   import { Checkbox, Kbd, TabItem, Tabs } from "flowbite-svelte";
   import { MAX_MASS, MAX_RADIUS } from "./constants";
   import { color, mass, preventInterlock, radius, speed } from "./state";
-  let visibility = "visible";
+  import { isTouchDevice } from "./utils";
+
+  let visibility = isTouchDevice() ? "hidden" : "visible";
+  if (isTouchDevice() && !sessionStorage.getItem("mobile-warn")) {
+    alert(
+      "This site is currrently designed to work with keyboard and mouse.\nSimulation will still work but you won't be able to control it"
+    );
+    sessionStorage.setItem("mobile-warn", "true");
+  }
 
   function keydown(e: KeyboardEvent) {
     if (e.key == "Escape") visibility = visibility === "visible" ? "hidden" : "visible";

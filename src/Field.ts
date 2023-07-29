@@ -1,18 +1,7 @@
+import { PALETTES, STARTING_DOTS } from "./constants";
 import { Point } from "./Point";
-import { STARTING_DOTS } from "./constants";
+import { gaussianRandom, rand } from "./utils";
 import { add, dot, magnitude, magnitude2, project, scale, sub, type Vec } from "./vector";
-
-function gaussianRandom(mean = 0, stdev = 1) {
-  const u = 1 - Math.random(); // Converting [0,1) to (0,1]
-  const v = Math.random();
-  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  // Transform to the desired mean and standard deviation:
-  return z * stdev + mean;
-}
-
-function rand(a = 0, b = 0) {
-  return Math.random() * (b - a) + a;
-}
 
 export class Field {
   size: Vec;
@@ -162,7 +151,9 @@ export class Field {
   populate() {
     const [w, h] = this.size;
     const area = window.innerWidth * window.innerHeight; // 415_454
-    for (const { radius, color, mass, count } of STARTING_DOTS) {
+    const palette = [...PALETTES[Math.floor(Math.random() * PALETTES.length)]];
+    for (const { radius, mass, count } of STARTING_DOTS) {
+      const color = palette.shift()!;
       for (let index = 0; index < (count * area) / 300_000; index++) {
         const point = new Point(rand(0, w), rand(0, h), gaussianRandom(0, 1), gaussianRandom(0, 1), radius, mass);
         point.color = color;
