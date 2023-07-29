@@ -82,20 +82,12 @@
 </div>
 
 <style>
-  .input-row {
-    @apply flex w-full gap-12;
-  }
-
   label {
     min-width: 200px;
   }
 
   input {
     flex-grow: 1;
-  }
-
-  input[type="checkbox"] {
-    accent-color: red;
   }
 
   input[type="color"] {
