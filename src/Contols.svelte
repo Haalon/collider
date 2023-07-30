@@ -90,6 +90,11 @@
     flex-grow: 1;
   }
 
+  /* fix issues with firefox */
+  input[type="range"] {
+    background-color: transparent;
+  }
+
   input[type="color"] {
     appearance: none;
     background-color: transparent;

@@ -6,6 +6,7 @@
 
   import { MAX_RADIUS } from "./constants";
   import { Field } from "./Field";
+  import { isTouchDevice } from "./utils";
   import { sub, type Vec } from "./vector";
 
   let canvas: HTMLCanvasElement;
@@ -44,6 +45,11 @@
   });
 
   function pointerdown(event: MouseEvent) {
+    if (isTouchDevice()) {
+      field.clear();
+      field.populate();
+      return;
+    }
     const rect = canvas.getBoundingClientRect();
     newPoint = new Point(event.pageX - rect.left, event.pageY - rect.top, 0, 0, $radius, $mass);
     newPoint.color = "#FFFFFF";

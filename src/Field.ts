@@ -1,6 +1,6 @@
 import { PALETTES, STARTING_DOTS } from "./constants";
 import { Point } from "./Point";
-import { gaussianRandom, rand } from "./utils";
+import { gaussianRandom, generateRandomNumbersWithSum, rand } from "./utils";
 import { add, dot, magnitude, magnitude2, project, scale, sub, type Vec } from "./vector";
 
 export class Field {
@@ -150,11 +150,20 @@ export class Field {
 
   populate() {
     const [w, h] = this.size;
-    const area = window.innerWidth * window.innerHeight; // 415_454
+    const circleAreas = STARTING_DOTS.map((e) => e.radius * e.radius * 2);
+    const area = window.innerWidth * window.innerHeight;
+    const restrictions = [
+      [0.1, 0.9],
+      [0.1, 0.9],
+      [0.1, 0.9],
+      [0.1, 0.9],
+    ];
+    const counts = generateRandomNumbersWithSum(4, area, circleAreas, restrictions).map(Math.floor);
     const palette = [...PALETTES[Math.floor(Math.random() * PALETTES.length)]];
-    for (const { radius, mass, count } of STARTING_DOTS) {
+    for (const { radius, mass } of STARTING_DOTS) {
       const color = palette.shift()!;
-      for (let index = 0; index < (count * area) / 300_000; index++) {
+      const count = counts.shift()!;
+      for (let index = 0; index < count; index++) {
         const point = new Point(rand(0, w), rand(0, h), gaussianRandom(0, 1), gaussianRandom(0, 1), radius, mass);
         point.color = color;
         this.addPoint(point);
