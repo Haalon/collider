@@ -40,7 +40,7 @@
     let frame = requestAnimationFrame(function loop(t) {
       frame = requestAnimationFrame(loop);
 
-      const startTime = performance.now();
+      // const startTime = performance.now();
       if (!$drawOnTop) context.clearRect(0, 0, canvasWidth, canvasHeight);
 
       field.movePoints($speed, $wrap);
@@ -49,7 +49,7 @@
 
       if (newPoint) newPoint.draw(context);
 
-      console.log(performance.now() - startTime);
+      // console.log(performance.now() - startTime);
     });
 
     return () => {

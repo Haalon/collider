@@ -204,7 +204,7 @@ export class Field {
       [0.1, 0.9],
       [0.1, 0.9],
     ];
-    const counts = [15, 166, 100, 2126]; //generateRandomNumbersWithSum(4, area, circleAreas, restrictions).map(Math.floor);
+    const counts = generateRandomNumbersWithSum(4, area, circleAreas, restrictions).map(Math.floor);
     const palette = [...PALETTES[Math.floor(Math.random() * PALETTES.length)]];
     for (const { radius, mass } of STARTING_DOTS) {
       const color = palette.shift()!;
