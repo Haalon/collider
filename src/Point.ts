@@ -1,4 +1,4 @@
-import { add, dot, magnitude, magnitude2, normalize, project, scale, sub, type Vec } from "./vector";
+import { add, scale, type Vec } from "./vector";
 
 export class Point {
   pos: Vec;
@@ -20,7 +20,7 @@ export class Point {
     this.mass = mass;
   }
 
-  moveInBox(w: number, h: number, speed: number = 1) {
+  moveWithBounds(w: number, h: number, speed: number = 1) {
     this.pos = add(this.pos, scale(speed, this.vel));
 
     if (this.pos[0] + this.radius > w && this.vel[0] > 0) this.vel[0] *= -1;
@@ -30,10 +30,24 @@ export class Point {
     if (this.pos[1] - this.radius < 0 && this.vel[1] < 0) this.vel[1] *= -1;
   }
 
+  moveWithWrap(w: number, h: number, speed: number = 1) {
+    this.pos = add(this.pos, scale(speed, this.vel));
+
+    if (this.pos[0] >= w) this.pos[0] -= w;
+    if (this.pos[0] < 0) this.pos[0] += w;
+
+    if (this.pos[1] >= h) this.pos[1] -= h;
+    if (this.pos[1] < 0) this.pos[1] += h;
+  }
+
   draw(context: CanvasRenderingContext2D) {
+    this.drawAt(context, this.pos);
+  }
+
+  drawAt(context: CanvasRenderingContext2D, coords: Vec) {
     context.fillStyle = this.color;
     context.beginPath();
-    context.arc(this.pos[0], this.pos[1], this.radius, 0, 2 * Math.PI);
+    context.arc(coords[0], coords[1], this.radius, 0, 2 * Math.PI);
     context.fill();
   }
 }

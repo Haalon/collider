@@ -2,7 +2,17 @@
   import { onMount } from "svelte";
   import { Point } from "./Point";
 
-  import { color, mass, preventInterlock, radius, speed } from "./state";
+  import {
+    areaFactor,
+    averageInitialMomentum,
+    color,
+    drawOnTop,
+    mass,
+    preventInterlock,
+    radius,
+    speed,
+    wrap,
+  } from "./state";
 
   import { MAX_RADIUS } from "./constants";
   import { Field } from "./Field";
@@ -15,28 +25,31 @@
 
   let field: Field;
 
+  let canvasWidth: number, canvasHeight: number;
+
   onMount(() => {
     const context = canvas.getContext("2d");
     if (!context) throw new Error("No canvas context");
 
-    const w = (canvas.width = window.innerWidth);
-    const h = (canvas.height = window.innerHeight);
+    canvasWidth = canvas.width = window.innerWidth;
+    canvasHeight = canvas.height = window.innerHeight;
 
-    field = new Field([w, h], MAX_RADIUS);
-    field.populate();
+    field = new Field([canvasWidth, canvasHeight], MAX_RADIUS);
+    field.populate($averageInitialMomentum, $areaFactor);
 
     let frame = requestAnimationFrame(function loop(t) {
       frame = requestAnimationFrame(loop);
 
-      context.clearRect(0, 0, w, h);
+      const startTime = performance.now();
+      if (!$drawOnTop) context.clearRect(0, 0, canvasWidth, canvasHeight);
 
-      for (const point of field.points) {
-        point.draw(context);
-      }
-      field.movePoints($speed);
-      field.calculateCollisions($preventInterlock);
+      field.movePoints($speed, $wrap);
+      field.calculateCollisions($preventInterlock, $wrap);
+      field.draw(context, $wrap);
 
       if (newPoint) newPoint.draw(context);
+
+      console.log(performance.now() - startTime);
     });
 
     return () => {
@@ -44,10 +57,17 @@
     };
   });
 
+  function resizeCanvas() {
+    canvasWidth = canvas.width = window.innerWidth;
+    canvasHeight = canvas.height = window.innerHeight;
+
+    field.size = [canvasWidth, canvasHeight];
+  }
+
   function pointerdown(event: MouseEvent) {
     if (isTouchDevice()) {
       field.clear();
-      field.populate();
+      field.populate($averageInitialMomentum, $areaFactor);
       return;
     }
     const rect = canvas.getBoundingClientRect();
@@ -75,7 +95,7 @@
   function keydown(e: KeyboardEvent) {
     if (e.key == "Backspace") {
       field.clear();
-      field.populate();
+      field.populate($averageInitialMomentum, $areaFactor);
     }
     if (e.key == "Delete") field.clear();
     if (e.key == " ") $speed = $speed === 0 ? 1 : 0;
@@ -83,6 +103,7 @@
 </script>
 
 <svelte:document on:keydown={keydown} />
+<svelte:window on:resize={resizeCanvas} />
 
 <canvas
   bind:this={canvas}

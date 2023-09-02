@@ -1,10 +1,10 @@
-export const MAX_RADIUS = 80;
+export const MAX_RADIUS = 50;
 
 export const MAX_MASS = 100;
 
 export const STARTING_DOTS = [
   {
-    radius: 80,
+    radius: 50,
     mass: 100,
   },
   {
@@ -60,4 +60,8 @@ export const PALETTES = [
   ["#12355b", "#420039", "#d72638", "#ffffff"],
   ["#ffffff", "#fff8e8", "#fcd581", "#d52941"],
   ["#be7c4d", "#92140c", "#353238", "#be5a38"],
+  ["#638475", "#90e39a", "#ddf093", "#f6d0b1"],
+  ["#3c1642", "#086375", "#1dd3b0", "#affc41"],
+  ["#102542", "#f87060", "#cdd7d6", "#b3a394"],
+  ["#04e762", "#f5b700", "#00a1e4", "#dc0073"],
 ];

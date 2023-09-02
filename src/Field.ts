@@ -3,6 +3,8 @@ import { Point } from "./Point";
 import { gaussianRandom, generateRandomNumbersWithSum, rand } from "./utils";
 import { add, dot, magnitude, magnitude2, project, scale, sub, type Vec } from "./vector";
 
+const EPS = 0.1;
+
 export class Field {
   size: Vec;
   fieldSize: Vec;
@@ -66,7 +68,7 @@ export class Field {
   getAdjacentBuckets(n: string) {
     const [i, j] = this.fieldIndex1dTo2d(n);
     // get only half of the 8 neighbours, since collisions are calculated an applied for both points
-    // that way collisions wont be chacked and calculated twice
+    // that way collisions wont be checked and calculated twice
     return [
       [0, 1],
       [1, 1],
@@ -77,12 +79,46 @@ export class Field {
       .map(([ni, nj]) => this.fieldIndex2dTo1d(ni, nj));
   }
 
-  calculateCollisions(preventInterlock = true) {
+  getAdjacentWrappedBuckets(n: string) {
+    const [i, j] = this.fieldIndex1dTo2d(n);
+    const [w, h] = this.size;
+    const cellSize = this.maxRadius * 2;
+    const bucketIndexToEdgePoints = (i, j) => {
+      return [
+        [i * cellSize, j * cellSize],
+        [(i + 1) * cellSize - EPS, j * cellSize],
+        [i * cellSize, (j + 1) * cellSize - EPS],
+        [(i + 1) * cellSize - EPS, (j + 1) * cellSize - EPS],
+      ].map(([i, j]) => [(i + w) % w, (j + h) % h]) as Vec[];
+    };
+    // get only half of the 8 neighbours, since collisions are calculated an applied for both points
+    // that way collisions wont be checked and calculated twice
+    return [
+      [0, 1],
+      [1, 1],
+      [1, 0],
+      [1, -1],
+    ]
+      .map(([di, dj]) => [i + di, j + dj])
+      .flatMap(([ni, nj]) => {
+        const endPoint = [(ni + 1) * cellSize, (nj + 1) * cellSize];
+        // cell fully inside the field
+        if (endPoint[0] > 0 && endPoint[0] <= w && endPoint[1] > 0 && endPoint[1] <= h)
+          return this.fieldIndex2dTo1d(ni, nj);
+
+        // otherwise - find where wrapped parts of the cell may end up
+        return bucketIndexToEdgePoints(ni, nj).map((point) => this.getBucketIndex(point));
+      })
+      .filter((value, index, arr) => arr.indexOf(value) === index && value !== n);
+  }
+
+  calculateCollisions(preventInterlock = true, wrap = false) {
+    const [w, h] = this.size;
     for (const index of this.buckets.keys()) {
       const currentPoints = this.buckets.get(index) || [];
       if (!currentPoints.length) continue;
 
-      const neighbourBucketIndexes = this.getAdjacentBuckets(index);
+      const neighbourBucketIndexes = wrap ? this.getAdjacentWrappedBuckets(index) : this.getAdjacentBuckets(index);
       const neighbourPoints = neighbourBucketIndexes.flatMap((n) => this.buckets.get(n) || []);
 
       for (let i = 0; i < currentPoints.length; i++) {
@@ -92,33 +128,42 @@ export class Field {
         for (let j = i + 1; j < currentPoints.length; j++) {
           const otherPoint = currentPoints[j];
 
-          const collisionAxis = sub(otherPoint.pos, thisPoint.pos);
-          const otherAxisVel = project(otherPoint.vel, collisionAxis);
-          const thisAxisVel = project(thisPoint.vel, collisionAxis);
-
-          const distance = magnitude(collisionAxis);
-
-          if (distance > thisPoint.radius + otherPoint.radius) continue;
-          if (preventInterlock && otherAxisVel > thisAxisVel) continue;
-          this.collide(thisPoint, otherPoint);
+          this.checkAndCollide(thisPoint, otherPoint, preventInterlock);
         }
 
         // collisions with neighbours
         for (let j = 0; j < neighbourPoints.length; j++) {
           const otherPoint = neighbourPoints[j];
 
-          const collisionAxis = sub(otherPoint.pos, thisPoint.pos);
-          const otherAxisVel = project(otherPoint.vel, collisionAxis);
-          const thisAxisVel = project(thisPoint.vel, collisionAxis);
+          const collided = this.checkAndCollide(thisPoint, otherPoint, preventInterlock);
+          // if not collided - try again but with wrapped shift by half the field size
+          if (!collided && wrap) {
+            const thisPos = thisPoint.pos;
+            thisPoint.pos = [(thisPoint.pos[0] + (w * 3) / 2) % w, (thisPoint.pos[1] + (h * 3) / 2) % h];
+            const otherPos = otherPoint.pos;
+            otherPoint.pos = [(otherPoint.pos[0] + (w * 3) / 2) % w, (otherPoint.pos[1] + (h * 3) / 2) % h];
 
-          const distance = magnitude(collisionAxis);
-
-          if (distance > thisPoint.radius + otherPoint.radius) continue;
-          if (preventInterlock && otherAxisVel > thisAxisVel) continue;
-          this.collide(thisPoint, otherPoint);
+            this.checkAndCollide(thisPoint, otherPoint, preventInterlock);
+            thisPoint.pos = thisPos;
+            otherPoint.pos = otherPos;
+          }
         }
       }
     }
+  }
+
+  checkAndCollide(pointA: Point, pointB: Point, preventInterlock = true): boolean {
+    const collisionAxis = sub(pointB.pos, pointA.pos);
+    const otherAxisVel = project(pointB.vel, collisionAxis);
+    const thisAxisVel = project(pointA.vel, collisionAxis);
+
+    const distance = magnitude(collisionAxis);
+
+    if (distance > pointA.radius + pointB.radius) return false;
+    if (preventInterlock && otherAxisVel > thisAxisVel) return false;
+    this.collide(pointA, pointB);
+
+    return true;
   }
 
   collide(pointA: Point, pointB: Point) {
@@ -140,17 +185,18 @@ export class Field {
     pointB.vel = add(pointB.vel, other_term);
   }
 
-  movePoints(speed) {
+  movePoints(speed, wrap = false) {
     for (const point of [...this.points]) {
       this.removePoint(point);
-      point.moveInBox(this.size[0], this.size[1], speed);
+      if (wrap) point.moveWithWrap(this.size[0], this.size[1], speed);
+      else point.moveWithBounds(this.size[0], this.size[1], speed);
       this.addPoint(point);
     }
   }
 
-  populate() {
+  populate(averageMomentum = 1, areaFactor = 2) {
     const [w, h] = this.size;
-    const circleAreas = STARTING_DOTS.map((e) => e.radius * e.radius * 2);
+    const circleAreas = STARTING_DOTS.map((e) => e.radius * e.radius * areaFactor);
     const area = window.innerWidth * window.innerHeight;
     const restrictions = [
       [0.1, 0.9],
@@ -158,13 +204,20 @@ export class Field {
       [0.1, 0.9],
       [0.1, 0.9],
     ];
-    const counts = generateRandomNumbersWithSum(4, area, circleAreas, restrictions).map(Math.floor);
+    const counts = [15, 166, 100, 2126]; //generateRandomNumbersWithSum(4, area, circleAreas, restrictions).map(Math.floor);
     const palette = [...PALETTES[Math.floor(Math.random() * PALETTES.length)]];
     for (const { radius, mass } of STARTING_DOTS) {
       const color = palette.shift()!;
       const count = counts.shift()!;
       for (let index = 0; index < count; index++) {
-        const point = new Point(rand(0, w), rand(0, h), gaussianRandom(0, 1), gaussianRandom(0, 1), radius, mass);
+        const point = new Point(
+          rand(0, w),
+          rand(0, h),
+          gaussianRandom(0, averageMomentum),
+          gaussianRandom(0, averageMomentum),
+          radius,
+          mass
+        );
         point.color = color;
         this.addPoint(point);
       }
@@ -173,5 +226,43 @@ export class Field {
 
   get points() {
     return this.locations.keys();
+  }
+
+  draw(context: CanvasRenderingContext2D, wrap = false) {
+    if (!wrap) for (const point of this.points) point.draw(context);
+    else {
+      const [w, h] = this.size;
+      for (const point of this.points) {
+        // point.draw(context);
+
+        let drawList = [point.pos];
+        if (point.pos[0] + point.radius > w)
+          drawList = drawList.flatMap(([i, j]) => [
+            [i, j],
+            [i - w, j],
+          ]);
+        // if (point.pos[0] + point.radius > w) point.drawAt(context, [x - w, y]);
+        if (point.pos[0] - point.radius < 0)
+          drawList = drawList.flatMap(([i, j]) => [
+            [i, j],
+            [i + w, j],
+          ]);
+        //point.drawAt(context, [x + w, y]);
+
+        if (point.pos[1] + point.radius > h)
+          drawList = drawList.flatMap(([i, j]) => [
+            [i, j],
+            [i, j - h],
+          ]);
+        // point.drawAt(context, [x, y - h]);
+        if (point.pos[1] - point.radius < 0)
+          drawList = drawList.flatMap(([i, j]) => [
+            [i, j],
+            [i, j + h],
+          ]);
+        // point.drawAt(context, [x, y + h]);
+        drawList.forEach((pos) => point.drawAt(context, pos));
+      }
+    }
   }
 }
